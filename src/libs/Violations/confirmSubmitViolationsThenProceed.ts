@@ -20,8 +20,11 @@ type ConfirmSubmitViolationsThenProceedParams = {
     dateFnsLocale: LocaleContextProps['dateFnsLocale'];
     convertToDisplayString: CurrencyListActionsContextType['convertToDisplayString'];
     shouldShowMarkAsDoneCopy?: boolean;
+    shouldWaitForMoreMenuDismiss?: boolean;
     /** Called immediately when there's nothing to confirm, or once the user confirms the violations modal. */
     onProceed: (shouldResolveAcknowledgedViolations?: boolean) => void;
+    /** Called when the user dismisses or cancels the violations confirmation modal. */
+    onCancel?: () => void;
 };
 
 /**
@@ -38,15 +41,26 @@ function confirmSubmitViolationsThenProceed({
     dateFnsLocale,
     convertToDisplayString,
     shouldShowMarkAsDoneCopy,
+    shouldWaitForMoreMenuDismiss,
     onProceed,
+    onCancel,
 }: ConfirmSubmitViolationsThenProceedParams) {
     if (!hasAnySubmitViolation(summary)) {
         onProceed();
         return;
     }
 
-    showSubmitViolationsConfirmModal({summary, showConfirmModal, translate, dateFnsLocale, convertToDisplayString, shouldShowMarkAsDoneCopy}).then((result) => {
+    showSubmitViolationsConfirmModal({
+        summary,
+        showConfirmModal,
+        translate,
+        dateFnsLocale,
+        convertToDisplayString,
+        shouldShowMarkAsDoneCopy,
+        shouldWaitForMoreMenuDismiss,
+    }).then((result) => {
         if (result.action !== ModalActions.CONFIRM) {
+            onCancel?.();
             return;
         }
         onProceed(shouldResolveAcknowledgedViolations(summary));

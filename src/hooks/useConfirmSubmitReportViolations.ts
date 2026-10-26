@@ -1,3 +1,4 @@
+import {useRef} from 'react';
 import confirmSubmitViolationsThenProceed from '@libs/Violations/confirmSubmitViolationsThenProceed';
 import {getReportSubmitViolationSummary} from '@libs/Violations/getReportSubmitViolationSummary';
 
@@ -13,6 +14,10 @@ import useTransactionsAndViolationsForReport from './useTransactionsAndViolation
 
 /** Called once the submitter has either had nothing to confirm or explicitly confirmed the violations modal. */
 type ConfirmSubmitReportViolationsOnProceed = (shouldResolveAcknowledgedViolations?: boolean) => void;
+
+type ConfirmSubmitReportViolationsOptions = {
+    shouldWaitForMoreMenuDismiss?: boolean;
+};
 
 type UseConfirmSubmitReportViolationsParams = {
     reportID: string | undefined;
@@ -43,8 +48,14 @@ function useConfirmSubmitReportViolations({
 
     const transactions = transactionsOverride ?? Object.values(ownedTransactions);
     const violationsCollection = violationsCollectionOverride ?? ownedViolationsCollection;
+    const isConfirmingRef = useRef(false);
 
-    return (onProceed: ConfirmSubmitReportViolationsOnProceed) => {
+    return (onProceed: ConfirmSubmitReportViolationsOnProceed, options?: ConfirmSubmitReportViolationsOptions) => {
+        if (isConfirmingRef.current) {
+            return;
+        }
+        isConfirmingRef.current = true;
+
         const summary = getReportSubmitViolationSummary(transactions, violationsCollection, report, policy, currentUserEmail ?? '', currentUserAccountID);
         confirmSubmitViolationsThenProceed({
             summary,
@@ -53,7 +64,14 @@ function useConfirmSubmitReportViolations({
             dateFnsLocale,
             convertToDisplayString,
             shouldShowMarkAsDoneCopy,
-            onProceed,
+            shouldWaitForMoreMenuDismiss: options?.shouldWaitForMoreMenuDismiss ?? false,
+            onProceed: (shouldResolve) => {
+                isConfirmingRef.current = false;
+                onProceed(shouldResolve);
+            },
+            onCancel: () => {
+                isConfirmingRef.current = false;
+            },
         });
     };
 }

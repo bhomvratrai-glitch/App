@@ -128,11 +128,7 @@ function SubmitActionButtonContent() {
     const shouldBlockSubmit = isBlockSubmitDueToStrictPolicyRules || isBlockSubmitDueToPreventSelfApproval;
 
     const handleSubmit = () => {
-        // A domain that strictly enforces workspace rules, or a workspace that prevents self-approval, makes the backend
-        // reject this submission, which the user only ever sees as a generic "Unexpected error". Bail out before any API
-        // call. The button is disabled on the same condition, so this is the second layer, and it has to run before the
-        // submit-to popover branch below, which would otherwise run the submission itself and hit the same rejection.
-        if (shouldBlockSubmit) {
+        if (isSubmittingAnimationRunning || shouldBlockSubmit) {
             return;
         }
 

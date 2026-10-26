@@ -21,15 +21,24 @@ type ShowSubmitViolationsConfirmModalParams = {
     dateFnsLocale: LocaleContextProps['dateFnsLocale'];
     convertToDisplayString: CurrencyListActionsContextType['convertToDisplayString'];
     shouldShowMarkAsDoneCopy?: boolean;
+    shouldWaitForMoreMenuDismiss?: boolean;
 };
 
 /**
  * Shows the "Submit report?" (or "Mark as done?") confirmation modal for a violation summary.
  */
-function showSubmitViolationsConfirmModal({summary, showConfirmModal, translate, dateFnsLocale, convertToDisplayString, shouldShowMarkAsDoneCopy}: ShowSubmitViolationsConfirmModalParams) {
+function showSubmitViolationsConfirmModal({
+    summary,
+    showConfirmModal,
+    translate,
+    dateFnsLocale,
+    convertToDisplayString,
+    shouldShowMarkAsDoneCopy,
+    shouldWaitForMoreMenuDismiss = false,
+}: ShowSubmitViolationsConfirmModalParams) {
     const bullets = buildSubmitViolationBullets({summary, translate, dateFnsLocale, convertToDisplayString});
 
-    return showConfirmModalAfterMoreMenuDismiss(showConfirmModal, {
+    const modalOptions = {
         title: translate(shouldShowMarkAsDoneCopy ? 'iou.confirmSubmitReportViolations.titleMarkAsDone' : 'iou.confirmSubmitReportViolations.title'),
         subtitle: translate(shouldShowMarkAsDoneCopy ? 'iou.confirmSubmitReportViolations.descriptionMarkAsDone' : 'iou.confirmSubmitReportViolations.description'),
         prompt: <SubmitViolationsList violations={bullets} />,
@@ -37,7 +46,13 @@ function showSubmitViolationsConfirmModal({summary, showConfirmModal, translate,
         cancelText: translate('common.cancel'),
         buttonVariant: CONST.BUTTON_VARIANT.DANGER,
         shouldEnablePromptScroll: true,
-    });
+    };
+
+    if (shouldWaitForMoreMenuDismiss) {
+        return showConfirmModalAfterMoreMenuDismiss(showConfirmModal, modalOptions);
+    }
+
+    return showConfirmModal(modalOptions);
 }
 
 export default showSubmitViolationsConfirmModal;

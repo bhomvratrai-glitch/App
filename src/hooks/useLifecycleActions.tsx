@@ -285,23 +285,27 @@ function useLifecycleActions({reportID, startApprovedAnimation, startAnimation, 
         }
 
         if (isSubmitPolicy(policy)) {
-            confirmSubmitReportViolations((shouldResolveAcknowledgedViolations) => {
-                openReportSubmitToPopover({
-                    shouldResolveAcknowledgedViolations,
-                    onSubmitSuccess: () => {
-                        if (skipAnimation) {
-                            clearSelectedTransactions(true);
-                            return;
-                        }
-                        startSubmittingAnimation();
-                    },
-                });
-            });
+            confirmSubmitReportViolations(
+                (shouldResolveAcknowledgedViolations) => {
+                    openReportSubmitToPopover({
+                        shouldResolveAcknowledgedViolations,
+                        onSubmitSuccess: () => {
+                            if (skipAnimation) {
+                                clearSelectedTransactions(true);
+                                return;
+                            }
+                            startSubmittingAnimation();
+                        },
+                    });
+                },
+                {shouldWaitForMoreMenuDismiss: true},
+            );
             return;
         }
 
-        confirmSubmitReportViolations((shouldResolveAcknowledgedViolations) => {
-            submitReport({
+        confirmSubmitReportViolations(
+            (shouldResolveAcknowledgedViolations) => {
+                submitReport({
                 getCurrencyDecimals,
                 expenseReport: moneyRequestReport,
                 expenseReportTransactions: transactions,
