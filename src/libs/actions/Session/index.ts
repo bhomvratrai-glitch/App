@@ -1787,7 +1787,7 @@ function AddWorkEmail(workEmail: string, formIDOrTaskReport: AddWorkEmailFormID 
         if (response?.message === CONST.WORK_DOMAIN_CONTROLLED_ERROR || response?.title === CONST.WORK_DOMAIN_CONTROLLED_ERROR) {
             Onyx.merge(ONYXKEYS.ONBOARDING_ERROR_MESSAGE_TRANSLATION_KEY, 'onboarding.mergeBlockScreen.domainControlledSubtitle');
         }
-        if (addWorkEmailTaskReport && response?.message === CONST.WORK_EMAIL_VALIDATED_PUBLIC_DOMAIN_ERROR) {
+        if (response?.message === CONST.WORK_EMAIL_VALIDATED_PUBLIC_DOMAIN_ERROR) {
             Onyx.merge(ONYXKEYS.ONBOARDING_ERROR_MESSAGE_TRANSLATION_KEY, 'onboarding.mergeBlockScreen.validatedPublicDomainSubtitle');
         }
         Onyx.merge(ONYXKEYS.NVP_ONBOARDING, {isMergingAccountBlocked: true});
