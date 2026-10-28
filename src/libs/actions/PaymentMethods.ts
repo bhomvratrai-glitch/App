@@ -25,7 +25,7 @@ import CONST from '@src/CONST';
 import ONYXKEYS from '@src/ONYXKEYS';
 import type {Route} from '@src/ROUTES';
 import INPUT_IDS from '@src/types/form/AddPaymentCardForm';
-import type {BankAccountList, CardList, FundList, PolicyMemberBankAccounts} from '@src/types/onyx';
+import type {BankAccountList, CardList, FundList, PolicyMemberBankAccounts, UserWallet} from '@src/types/onyx';
 import type PaymentMethod from '@src/types/onyx/PaymentMethod';
 import type Policy from '@src/types/onyx/Policy';
 import type Session from '@src/types/onyx/Session';
@@ -38,6 +38,14 @@ import type {ValueOf} from 'type-fest';
 import Onyx from 'react-native-onyx';
 
 import getMakeDefaultPaymentOnyxData from './getMakeDefaultPaymentOnyxData';
+
+let currentUserWallet: OnyxEntry<UserWallet>;
+Onyx.connect({
+    key: ONYXKEYS.USER_WALLET,
+    callback: (value) => {
+        currentUserWallet = value;
+    },
+});
 
 /**
  * When we successfully add a payment method or pass the KYC checks we will continue with our setup action if we have one set.
@@ -349,7 +357,10 @@ function transferWalletBalance(paymentMethod: PaymentMethod) {
         [paymentMethodIDKey]: paymentMethod.methodID,
     };
 
-    const optimisticData: Array<OnyxUpdate<typeof ONYXKEYS.WALLET_TRANSFER>> = [
+    const previousBalance = currentUserWallet?.currentBalance ?? 0;
+    const previousAvailableBalance = currentUserWallet?.availableBalance ?? 0;
+
+    const optimisticData: Array<OnyxUpdate<typeof ONYXKEYS.WALLET_TRANSFER | typeof ONYXKEYS.USER_WALLET>> = [
         {
             onyxMethod: 'merge',
             key: ONYXKEYS.WALLET_TRANSFER,
@@ -358,9 +369,17 @@ function transferWalletBalance(paymentMethod: PaymentMethod) {
                 errors: null,
             },
         },
+        {
+            onyxMethod: 'merge',
+            key: ONYXKEYS.USER_WALLET,
+            value: {
+                currentBalance: 0,
+                availableBalance: 0,
+            },
+        },
     ];
 
-    const successData: Array<OnyxUpdate<typeof ONYXKEYS.WALLET_TRANSFER>> = [
+    const successData: Array<OnyxUpdate<typeof ONYXKEYS.WALLET_TRANSFER | typeof ONYXKEYS.USER_WALLET>> = [
         {
             onyxMethod: 'merge',
             key: ONYXKEYS.WALLET_TRANSFER,
@@ -370,15 +389,31 @@ function transferWalletBalance(paymentMethod: PaymentMethod) {
                 paymentMethodType: paymentMethod.accountType,
             },
         },
+        {
+            onyxMethod: 'merge',
+            key: ONYXKEYS.USER_WALLET,
+            value: {
+                currentBalance: 0,
+                availableBalance: 0,
+            },
+        },
     ];
 
-    const failureData: Array<OnyxUpdate<typeof ONYXKEYS.WALLET_TRANSFER>> = [
+    const failureData: Array<OnyxUpdate<typeof ONYXKEYS.WALLET_TRANSFER | typeof ONYXKEYS.USER_WALLET>> = [
         {
             onyxMethod: 'merge',
             key: ONYXKEYS.WALLET_TRANSFER,
             value: {
                 loading: false,
                 shouldShowSuccess: false,
+            },
+        },
+        {
+            onyxMethod: 'merge',
+            key: ONYXKEYS.USER_WALLET,
+            value: {
+                currentBalance: previousBalance,
+                availableBalance: previousAvailableBalance,
             },
         },
     ];
