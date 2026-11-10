@@ -136,14 +136,20 @@ function WorkspaceCompanyCardsTable({
     const [personalDetails, personalDetailsMetadata] = useAllPersonalDetails();
     const [sharedCardCustomNames] = useOnyx(`${ONYXKEYS.COLLECTION.SHARED_NVP_PRIVATE_DOMAIN_MEMBER}${domainOrWorkspaceAccountID}`, {selector: companyCardCustomNamesSelector});
     const [companyCardsLoadingState] = useOnyx(`${ONYXKEYS.COLLECTION.RAM_ONLY_COMPANY_CARDS_LOADING_STATE}${domainOrWorkspaceAccountID}`);
+    const [policyCardsLoadingState] = useOnyx(`${ONYXKEYS.COLLECTION.RAM_ONLY_COMPANY_CARDS_LOADING_STATE}${policyID}`);
 
     const hasOnceLoadedPage = !!companyCardsLoadingState?.hasOnceLoadedPage;
     const hasOnceLoadedSelectedFeed = !!bankName && !!companyCardsLoadingState?.feeds?.[bankName]?.hasOnceLoaded;
+    const hasPageLoadError = !!policyCardsLoadingState?.hasPageLoadError && !policyCardsLoadingState?.isPageLoading;
 
     const hasNoAssignedCard = Object.keys(assignedCards ?? {}).length === 0;
 
     // Synthesize error locally since Onyx discards writes to collection keys with member ID '0'.
-    const shouldShowWorkspaceFeedsLoadError = domainOrWorkspaceAccountID === CONST.DEFAULT_NUMBER_ID && isPolicyLoaded && !isOffline;
+    // Also surface the error if the page request failed while policyAccountID remained unresolved.
+    const shouldShowWorkspaceFeedsLoadError =
+        !isOffline &&
+        ((domainOrWorkspaceAccountID === CONST.DEFAULT_NUMBER_ID && (isPolicyLoaded || hasPageLoadError)) ||
+            (hasPageLoadError && !workspaceCardFeedsStatus?.[domainOrWorkspaceAccountID]?.errors));
     const workspaceCardFeedsErrors = shouldShowWorkspaceFeedsLoadError
         ? {
               [CONST.COMPANY_CARDS.WORKSPACE_FEEDS_LOAD_ERROR]: translate('workspace.companyCards.error.workspaceFeedsCouldNotBeLoadedMessage'),
@@ -180,8 +186,9 @@ function WorkspaceCompanyCardsTable({
     const isLoadingOnyxFeed = !isNoFeed && isLoadingOnyxValue(lastSelectedFeedMetadata) && !hasOnceLoadedSelectedFeed;
     const isSelectedFeedLoading = !!selectedFeedStatus?.isLoading && !hasOnceLoadedSelectedFeed;
 
+    const isAwaitingPolicyLoad = !isPolicyLoaded && !(hasPageLoadError && !isOffline);
     const isLoadingPage = !isOffline && !hasCards && (isLoadingOnyxPersonalDetails || areWorkspaceCardFeedsLoading);
-    const isLoadingFeed = !hasCards && ((!feedName && isInitiallyLoadingFeeds) || !isPolicyLoaded || isLoadingOnyxFeed || isSelectedFeedLoading);
+    const isLoadingFeed = !hasCards && ((!feedName && isInitiallyLoadingFeeds) || isAwaitingPolicyLoad || isLoadingOnyxFeed || isSelectedFeedLoading);
     const isLoading = isLoadingPage || isLoadingFeed || isLoadingOnyxCardList;
 
     // Unassign requests hide their rows while online (pending-delete filter below), so bulk unassigning every

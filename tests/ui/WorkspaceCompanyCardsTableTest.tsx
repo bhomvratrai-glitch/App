@@ -306,6 +306,42 @@ describe('WorkspaceCompanyCardsTable unresolved workspace account ID', () => {
         expect(screen.queryByTestId('WorkspaceCompanyCardsTableLoadingIndicator')).toBeNull();
         expect(screen.getByText(TestHelper.translateLocal('workspace.companyCards.error.workspaceFeedsCouldNotBeLoadedTitle'))).toBeTruthy();
     });
+
+    it('shows the feeds load error when the policy-scoped page fetch fails even if policyAccountID is still unresolved', async () => {
+        await Onyx.merge(`${ONYXKEYS.COLLECTION.RAM_ONLY_COMPANY_CARDS_LOADING_STATE}${POLICY_ID}`, {
+            isPageLoading: false,
+            hasPageLoadError: true,
+        });
+
+        renderTable(buildCompanyCards({workspaceCardFeedsStatus: {}}), false, {
+            isPolicyLoaded: false,
+            isPageFetchPending: true,
+            domainOrWorkspaceAccountID: CONST.DEFAULT_NUMBER_ID,
+        });
+
+        await waitForBatchedUpdates();
+
+        expect(screen.queryByTestId('WorkspaceCompanyCardsTableLoadingIndicator')).toBeNull();
+        expect(screen.getByText(TestHelper.translateLocal('workspace.companyCards.error.workspaceFeedsCouldNotBeLoadedTitle'))).toBeTruthy();
+    });
+
+    it('returns to the loading indicator when retrying a failed page fetch before policyAccountID resolves', async () => {
+        await Onyx.merge(`${ONYXKEYS.COLLECTION.RAM_ONLY_COMPANY_CARDS_LOADING_STATE}${POLICY_ID}`, {
+            isPageLoading: true,
+            hasPageLoadError: false,
+        });
+
+        renderTable(buildCompanyCards({workspaceCardFeedsStatus: {}}), false, {
+            isPolicyLoaded: false,
+            isPageFetchPending: true,
+            domainOrWorkspaceAccountID: CONST.DEFAULT_NUMBER_ID,
+        });
+
+        await waitForBatchedUpdates();
+
+        expect(screen.getByTestId('WorkspaceCompanyCardsTableLoadingIndicator')).toBeTruthy();
+        expect(screen.queryByText(TestHelper.translateLocal('workspace.companyCards.error.workspaceFeedsCouldNotBeLoadedTitle'))).toBeNull();
+    });
 });
 
 describe('WorkspaceCompanyCardsTable selection mode', () => {

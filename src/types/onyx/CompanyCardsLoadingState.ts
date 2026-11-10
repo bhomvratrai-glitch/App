@@ -18,6 +18,12 @@ type CompanyCardsLoadingState = {
     /** Whether workspace company card feeds have been fetched at least once in this session */
     hasOnceLoadedPage?: boolean;
 
+    /** Whether the company cards page load request is currently in flight (keyed by policyID) */
+    isPageLoading?: boolean;
+
+    /** Whether the latest company cards page load request failed (keyed by policyID) */
+    hasPageLoadError?: boolean;
+
     /** Identifies the latest successful bulk transaction start date update */
     bulkTransactionStartDateUpdateSuccessID?: string;
 

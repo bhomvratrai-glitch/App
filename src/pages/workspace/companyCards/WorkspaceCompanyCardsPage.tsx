@@ -61,6 +61,7 @@ function WorkspaceCompanyCardsPage({route}: WorkspaceCompanyCardsPageProps) {
 
     const domainOrWorkspaceAccountID = getDomainOrWorkspaceAccountID(workspaceAccountID, selectedFeed);
     const [companyCardsLoadingState] = useOnyx(`${ONYXKEYS.COLLECTION.RAM_ONLY_COMPANY_CARDS_LOADING_STATE}${domainOrWorkspaceAccountID}`);
+    const [policyCompanyCardsLoadingState] = useOnyx(`${ONYXKEYS.COLLECTION.RAM_ONLY_COMPANY_CARDS_LOADING_STATE}${policyID}`);
 
     const bulkTransactionStartDateUpdateID = companyCardsLoadingState?.bulkTransactionStartDateUpdateID;
     const lastHandledBulkTransactionStartDateUpdateID = useRef<string | undefined>(undefined);
@@ -100,8 +101,8 @@ function WorkspaceCompanyCardsPage({route}: WorkspaceCompanyCardsPageProps) {
     });
 
     // A freshly created workspace has no account ID until the back end returns one, so we can't treat the policy as loaded yet.
-    // Offline that response can never arrive, so we consider the policy loaded to avoid showing a spinner that would never resolve.
-    const isPolicyLoaded = !!policy && (policy.policyAccountID !== undefined || isOffline);
+    // Offline that response can never arrive, and if the page fetch already settled we treat it as loaded so we don't spin indefinitely.
+    const isPolicyLoaded = !!policy && (policy.policyAccountID !== undefined || isOffline || !!policyCompanyCardsLoadingState?.hasOnceLoadedPage);
 
     const isLoading = !isOffline && (!allCardFeeds || (isFeedAdded && isLoadingOnyxValue(cardListMetadata)));
 
